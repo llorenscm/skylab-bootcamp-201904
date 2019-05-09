@@ -25,7 +25,9 @@ app.get('/', (req, res) =>
 app.get('/register', (req, res) => {
     res.send(render(`<h2>Register</h2>
         <form method="post" action="/register">
-            <input type="text" name="username" placeholder="username" required >
+            <input type="text" name="name" placeholder="name" required autofocus >
+            <input type="text" name="surname" placeholder="surname" required >
+            <input type="email" name="email" placeholder="email" required >
             <input type="password" name="password" placeholder="password" required>
             <button>Register</button>
         </form>`))
@@ -33,20 +35,21 @@ app.get('/register', (req, res) => {
 
 app.post('/register', bodyParser, (req, res) => {
 
-    const { username, password } = req.body
+    const { name, surname, email, password } = req.body
 
-    user.username = username
-    user.password = password
+    logic.registerUser(name,surname,email,password)
+    .then(()=> res.send(render(`<p>Ok, user correctly registered, you can now proceed to <a href="/login">login</a></p>`)))
+    .catch(({message}) =>{
 
-    if (username && password) res.send(render(`<p>Ok, user correctly registered, you can now proceed to <a href="/login">login</a></p>`))
-    else {
         res.send(render(`
         <form method="post" action="/register" >
             <input type="text" name="username" placeholder="username" >
             <input type="password" name="password" placeholder="password" >
             <button>Register</button>
-        </form><p>Field empty</p>`))
-    }
+        </form>
+        <p>${message}</p>`))
+    })
+  
 })
 
 app.get('/login', (req, res) =>

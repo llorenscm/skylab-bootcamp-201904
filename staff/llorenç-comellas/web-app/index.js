@@ -1,8 +1,6 @@
 const express = require('express')
 const { injectLogic, checkLogin } = require('./middlewares')
-const render = require('./components/render')
 const package = require('./package.json')
-const { Register, Home } = require('./components')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 
@@ -71,10 +69,11 @@ app.get('/home', checkLogin('/', false), (req, res) => {
 
     logic.retrieveUser()
         .then(({ name }) => res.render('home', { name }))
-        .catch(({ message }) => es.render('home', { name, message }))
+        .catch(({ message }) => res.render('home', { name, message }))
 })
 
 app.get('/home/search', checkLogin('/', false), urlencodedParser, (req, res) => {
+    debugger;
     const { query: { query }, logic, session } = req
 
     session.query = query
@@ -97,7 +96,7 @@ app.get('/home/duck/:id', checkLogin('/', false), (req, res) => {
             const duck = { title, image, description, price }
 
             return logic.retrieveUser()
-                .then(({ name }) => res.send(render(new Home().render({ query, name, duck }))))
+                .then(({ name }) => res.render('home', { query, name, duck }))
         })
 })
 

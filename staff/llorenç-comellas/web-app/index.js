@@ -32,7 +32,6 @@ app.get('/register', checkLogin('/home'), (req, res) => {
 
 app.post('/register', [checkLogin('/home'), urlencodedParser], (req, res) => {
     const { body: { name, surname, email, password }, logic } = req
-
     try {
         logic.registerUser(name, surname, email, password)
             .then(() => res.send(render(`<p>Ok, user correctly registered, you can now proceed to <a href="/login">login</a></p>`)))
@@ -44,13 +43,12 @@ app.post('/register', [checkLogin('/home'), urlencodedParser], (req, res) => {
     }
 })
 
-app.get('/login', checkLogin('/home'), (req, res) =>
+app.get('/login', checkLogin('/home'), (req, res) =>{
     res.render('login')
-)
+})
 
 app.post('/login', [checkLogin('/home'), urlencodedParser], (req, res) => {
     const { body: { email, password }, logic, session } = req
-
     try {
         logic.loginUser(email, password)
             .then(() => {
@@ -73,24 +71,25 @@ app.get('/home', checkLogin('/', false), (req, res) => {
 })
 
 app.get('/home/search', checkLogin('/', false), urlencodedParser, (req, res) => {
-    debugger;
+    debugger
     const { query: { query }, logic, session } = req
 
     session.query = query
 
-    logic.searchDucks(query)
-        .then(ducks => {
+    Promise.all([logic.searchDucks(query), logic.retrieveFavDucks()])
+    .then(([ducks,favs]) => {
+            
             ducks = ducks.map(({ id, title, imageUrl: image, price }) => ({ url: `/home/duck/${id}`, title, image, price }))
 
             return logic.retrieveUser()
-                .then(({ name }) => res.render('home', { name, query, ducks }))
+                .then(({ name }) => res.render('home', { name, query, ducks,favs }))
         })
         .catch(({ message }) => res.render('home', { name, query, ducks, message}))
 })
 
 app.get('/home/duck/:id', checkLogin('/', false), (req, res) => {
     const { params: { id }, logic, session: { query } } = req
-
+    debugger
     logic.retrieveDuck(id)
         .then(({ title, imageUrl: image, description, price }) => {
             const duck = { title, image, description, price }

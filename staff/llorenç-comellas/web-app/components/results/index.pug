@@ -1,8 +1,11 @@
-mixin results(list)
+mixin results(list, favs)
     ul
         each item in list
+            - const isFav = favs.some(fav => fav.id === item.id)
             li
                 a(href=item.url)
                     h2 #{item.title}
                     img(src=item.image)
                     span #{item.price}
+                button
+                    i(class=isFav ? "fas fa-heart" : "far fa-heart")

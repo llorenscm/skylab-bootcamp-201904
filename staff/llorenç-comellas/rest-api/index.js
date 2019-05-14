@@ -5,52 +5,75 @@ const logic = require('./logic')
 
 const jsonParser = bodyParser.json()
 
-const { argv: [, , port = 3000] } = process
+const { argv: [, , port = 8080] } = process
 
 const app = express()
-
 
 app.post('/user', jsonParser, (req, res) => {
     const { body: { name, surname, email, password } } = req
 
     try {
         logic.registerUser(name, surname, email, password)
-            .then(() => res.json({ messge: ' Ok, user registered' }))
+            .then(() => res.json({ message: 'Ok, user registered. ' }))
             .catch(({ message }) => {
                 res.status(400).json({ error: message })
             })
     } catch ({ message }) {
-        res.render('register', { name, surname, email, message })
+        res.status(400).json({ error: message })
     }
 })
 
-// app.get('/login', checkLogin('/home'), (req, res) =>
-//     res.render('login')
-// )
+app.post('/auth', (req, res) => {
+    const { body: { email, password } } = req
 
-// app.post('/login', [checkLogin('/home'), urlencodedParser], (req, res) => {
-//     const { body: { email, password }, logic, session } = req
+    try {
+        logic.authenticateUser(email, password)
+            .then((token) => res.json(token))
+            .catch(({ message }) => {
+                res.status(400).json({ error: message })
+            })
 
-//     try {
-//         logic.loginUser(email, password)
-//             .then(() => {
-//                 session.token = logic.__userToken__
+    } catch ({ message }) {
+        res.status(400).json({ error: message })
+    }
 
-//                 res.redirect('/home')
-//             })
-//             .catch(({ message }) => res.render('login', { email, message }))
-//     } catch ({ message }) {
-//         res.render('login', { email, message })
-//     }
-// })
+})
 
-// app.get('/home', checkLogin('/', false), (req, res) => {
-//     const { logic } = req
+app.get('/user', jsonParser, (req, res) => {
+    let { headers: { authorization: token } } = req
+    token = token.split(' ')[1]
 
-//     logic.retrieveUser()
-//         .then(({ name }) => res.render('home', { name }))
-//         .catch(({ message }) => res.render('home', { message }))
-// })
+    try {
+        logic.retrieveUser(token)
+            .then(data => res.json(data))
+            .catch(({ message }) => {
+                res.status(400).json({ error: message })
+            })
+
+    } catch ({ message }) {
+        res.status(400).json({ error: message })
+    }
+
+})
+
+app.get('ducks', jsonParser, (req, res) => {
+    let { headers: { authorization: token } } = req
+    token = token.split(' ')[1]
+
+    const { query } = req
+
+    logic.searchDucks(token, query)
+
+
+})
+
+app.use(function (req, res, next) {
+    res.redirect('/')
+})
+
+app.listen(port, () => console.log(`${package.name} ${package.version} up on port ${port}`))
+
+
 
 // app.get('/home/search', checkLogin('/', false), urlencodedParser, (req, res) => {
 //     const { query: { query }, logic, session } = req
@@ -102,9 +125,3 @@ app.post('/user', jsonParser, (req, res) => {
 
 //     res.redirect('/')
 // })
-
-app.use(function (req, res, next) {
-    res.redirect('/')
-})
-
-app.listen(port, () => console.log(`${package.name} ${package.version} up on port ${port}`))

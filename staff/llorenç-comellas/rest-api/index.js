@@ -23,7 +23,7 @@ app.post('/user', jsonParser, (req, res) => {
     }
 })
 
-app.post('/auth', (req, res) => {
+app.post('/auth', jsonParser, (req, res) => {
     const { body: { email, password } } = req
 
     try {
@@ -39,7 +39,7 @@ app.post('/auth', (req, res) => {
 
 })
 
-app.get('/user', jsonParser, (req, res) => {
+app.get('/user', (req, res) => {
     let { headers: { authorization: token } } = req
     token = token.split(' ')[1]
 

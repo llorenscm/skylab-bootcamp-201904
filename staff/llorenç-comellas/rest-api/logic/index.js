@@ -1,11 +1,11 @@
 const validate = require('../common/validate')
 const userApi = require('../data/user-api')
 const duckApi = require('../data/duck-api')
-const { LogicError } = require('../common/errors')
+const { LogicError, UnknownError } = require('../common/errors')
 const _token = require('../common/token')
 
-const logic = { // TODO move to single object in memory (logic) 
 
+const logic = {
     registerUser(name, surname, email, password) {
         validate.arguments([
             { name: 'name', value: name, type: 'string', notEmpty: true },
@@ -19,8 +19,7 @@ const logic = { // TODO move to single object in memory (logic)
         return userApi.create(email, password, { name, surname })
             .then(response => {
                 if (response.status === 'OK') return
-
-                throw new LogicError(response.error)
+                else throw new LogicError(response.error)
             })
     },
 
@@ -34,19 +33,18 @@ const logic = { // TODO move to single object in memory (logic)
 
         return userApi.authenticate(email, password)
             .then(response => {
-                if (response.status === 'OK') {
-                    const { data: { token } } = response
-
-                    return token
-                } else throw new LogicError(response.error)
+                if (response.status === 'OK') return response.data.token
+                else throw new LogicError(response.error)
             })
     },
 
     retrieveUser(token) {
         validate.arguments([
-            { name: 'token', value: token, type: 'string', notEmpty: true },
+            { name: 'token', value: token, type: 'string', notEmpty: true }
         ])
+
         const { id } = _token.payload(token)
+
         return userApi.retrieve(id, token)
             .then(response => {
                 if (response.status === 'OK') {
@@ -62,6 +60,7 @@ const logic = { // TODO move to single object in memory (logic)
             { name: 'token', value: token, type: 'string', notEmpty: true },
             { name: 'query', value: query, type: 'string' }
         ])
+
         const { id } = _token.payload(token)
 
         return userApi.retrieve(id, token)
@@ -69,20 +68,18 @@ const logic = { // TODO move to single object in memory (logic)
                 if (response.status === 'OK') {
                     return duckApi.searchDucks(query)
                         .then(ducks => ducks instanceof Array ? ducks : [])
-
                 } else throw new LogicError(response.error)
             })
-
     },
 
     retrieveDuck(token, id) {
         validate.arguments([
-            { name: 'id', value: id, type: 'string' },
-            { name: 'token', value: token, type: 'string' }
+            { name: 'token', value: token, type: 'string', notEmpty: true },
+            { name: 'id', value: id, type: 'string' }
         ])
 
         const { id: _id } = _token.payload(token)
-        
+
         return userApi.retrieve(_id, token)
             .then(response => {
                 if (response.status === 'OK') {
@@ -93,8 +90,8 @@ const logic = { // TODO move to single object in memory (logic)
 
     toggleFavDuck(token, id) {
         validate.arguments([
-            { name: 'id', value: id, type: 'string', notEmpty: true},
-            { name: 'token', value: token, type: 'string', notEmpty: true }
+            { name: 'token', value: token, type: 'string', notEmpty: true },
+            { name: 'id', value: id, type: 'string' }
         ])
 
         const { id: _id } = _token.payload(token)
@@ -104,7 +101,7 @@ const logic = { // TODO move to single object in memory (logic)
                 const { status, data } = response
 
                 if (status === 'OK') {
-                    const { favs = [] } = data // NOTE if data.favs === undefined then favs = []
+                    const { favs = [] } = data
 
                     const index = favs.indexOf(id)
 
@@ -121,12 +118,12 @@ const logic = { // TODO move to single object in memory (logic)
 
     retrieveFavDucks(token) {
         validate.arguments([
-            { name: 'token', value: token, type: 'string' }
+            { name: 'token', value: token, type: 'string', notEmpty: true }
         ])
 
-        const { id } = _token.payload(token)
+        const { id: _id } = _token.payload(token)
 
-        return userApi.retrieve(id, token)
+        return userApi.retrieve(_id, token)
             .then(response => {
                 const { status, data } = response
 

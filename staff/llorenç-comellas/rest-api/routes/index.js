@@ -13,7 +13,7 @@ router.post('/users', jsonParser, (req, res) => {
 
     handleErrors(() =>
         logic.registerUser(name, surname, email, password)
-            .then(() => res.status(201).json({ status: 'OK', message: 'Ok, user registered. ' })),
+            .then(() => res.status(201).json({message: 'Ok, user registered.' })),
         res)
 })
 
@@ -22,7 +22,7 @@ router.post('/users/auth', jsonParser, (req, res) => {
 
     handleErrors(() =>
         logic.authenticateUser(email, password)
-            .then(token => res.json({ status: 'OK', token })),
+            .then(token => res.json({token })),
         res)
 })
 
@@ -37,7 +37,7 @@ router.get('/users', (req, res) => {
         if (!token) throw new UnauthorizedError()
 
         return logic.retrieveUser(token)
-            .then(user => res.json({user, status:'OK'}))
+            .then(user => res.json({user}))
     },
         res)
 })
